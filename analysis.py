@@ -83,3 +83,36 @@ def parse_request(request):
             key, value = line.split(": ")
             headers[key] = value
     return method, path, headers
+
+def parse_form_data(request):
+    # Extract the method and URI path
+    method, path = parse_http(request)
+
+    # Check if the method is POST
+    if method != 'POST':
+        return None
+
+    # Split the request into headers and body
+    headers, body = request.decode().split(hsep+hsep, 1)
+
+    # Parse the form data
+    data = {}
+    for field in body.split(hsep):
+        if '=' in field:
+            key, value = field.split('=', 1)
+            data[key] = value
+
+    # Convert the form data to JSON format
+    json_data = {
+        'name': data.get('name'),
+        'gender': data.get('gender'),
+        'birthyear': data.get('birthyear'),
+        'birthplace': data.get('birthplace'),
+        'residence': data.get('residence'),
+        'job': data.get('job'),
+        'pets': data.getlist('pets[]'),
+        'message': data.get('message'),
+        'question': {k: int(v) for k, v in data.items() if k.startswith('question[')}
+    }
+
+    return json_data
