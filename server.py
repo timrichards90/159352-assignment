@@ -1,4 +1,5 @@
 import os
+import analysis
 import socket
 import _thread
 
@@ -17,6 +18,7 @@ def parse_http(request):
         cmd = ''
         path = ''
     return cmd, path
+
 
 def parse_authentication(request):
     key = request.decode().split().pop()
@@ -102,8 +104,9 @@ def do_request(connectionSocket):
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
     elif cmd == 'POST' and path == '/analysis':
-        # do something with JSON here
-        pass
+        for line in request.decode().split(hsep):
+            print('#', line)
+        deliver_200(connectionSocket)
     else:
         deliver_404(connectionSocket)
 
@@ -113,7 +116,6 @@ def do_request(connectionSocket):
     ftype = filename.split('.').pop()  # the file extension
 
     # sign_in_status = authenticate(connectionSocket, request)
-
 
     # If file exists, try and deliver
     # if os.path.exists(filename) and sign_in_status:
@@ -159,5 +161,5 @@ def main(serverPort):
 
 
 if __name__ == '__main__':
-    serverPort = 8000
+    serverPort = 8080
     main(serverPort)
