@@ -116,3 +116,13 @@ def parse_form_data(request):
     }
 
     return json_data
+
+# might need to decode first : form_data = connection.recv(1024)
+# decoded_data = form_data.decode('utf-8')
+
+# Decode the form data
+form_data = connection.recv(1024)
+decoded_data = form_data.decode('utf-8')
+
+# Parse the form data as JSON
+json_data = json.loads(decoded_data)
