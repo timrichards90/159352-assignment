@@ -1,0 +1,6 @@
+Use the example 3 of js examples to see how to parse json text in
+newwin example comes up in the assignment
+ajax demo, use js to make a request to server - not the browser. we're not using xml even tho the name says get xml
+xmlonload - when it's finished loading - this could be after user enters their shit and hits enter
+we will be doing something like ajax demo in the assignment
+might have to use the canvas example to display images from the api - use getimage js in third example

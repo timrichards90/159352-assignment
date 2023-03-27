@@ -78,6 +78,34 @@ def deliver_jpeg(connection, filename):
     http_body(connection, content)
 
 
+def deliver_gif(connection, filename):
+    """Deliver content of GIF image file"""
+    content = gobble_file(filename, binary=True)
+    deliver_200(connection)
+    http_header(connection, 'Content-Type: image/gif')
+    http_header(connection, 'Accept-Ranges: bytes')
+    http_body(connection, content)
+
+def deliver_js(connection, filename):
+    """Deliver Javascript"""
+    content = gobble_file(filename)
+    deliver_200(connection)
+    http_header(connection, 'Content-Type: text/javascript')
+    http_body(connection, content.encode())
+
+
+def deliver_json_string(connection, jsonstr):
+    deliver_200(connection)
+    http_header(connection, 'Content-Type: application/json')
+    http_body(connection, jsonstr.encode())
+
+
+def deliver_json(connection, filename):
+    """Deliver JSON stored in a server-side file"""
+    content = gobble_file(filename)
+    deliver_json_string(connection, content)
+
+
 # def authenticate(connection, request):
 #     key = parse_authentication(request)
 #     correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
@@ -103,12 +131,19 @@ def do_request(connectionSocket):
         deliver_html(connectionSocket, 'index.html')
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
+        deliver_gif(connectionSocket, path.strip('/'))
     elif cmd == 'POST' and path == '/analysis':
         for line in request.decode().split(hsep):
             print('#', line)
         deliver_200(connectionSocket)
     else:
         deliver_404(connectionSocket)
+
+    # elif cmd == 'GET' and path == '/datefunc.js':
+    #     deliver_js(connectionSocket, 'datefunc.js')
+    # elif path == '/dachshund.jpeg':
+    #     deliver_jpeg(connectionSocket, path.strip('/'))
+    # elif path in ['/pic_bulboff.gif', '/pic_bulbon.gif', '/sun.gif']:
 
     # Implement our URI path mapping scheme - here remove leading and
     # trailing '/' and use what's left as a local file name
