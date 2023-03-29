@@ -1,7 +1,8 @@
+import json
 import os
-import analysis
 import socket
 import _thread
+import analysis
 
 hsep = '\r\n'
 
@@ -78,13 +79,13 @@ def deliver_jpeg(connection, filename):
     http_body(connection, content)
 
 
-def deliver_gif(connection, filename):
-    """Deliver content of GIF image file"""
-    content = gobble_file(filename, binary=True)
-    deliver_200(connection)
-    http_header(connection, 'Content-Type: image/gif')
-    http_header(connection, 'Accept-Ranges: bytes')
-    http_body(connection, content)
+# def deliver_gif(connection, filename):
+#     """Deliver content of GIF image file"""
+#     content = gobble_file(filename, binary=True)
+#     deliver_200(connection)
+#     http_header(connection, 'Content-Type: image/gif')
+#     http_header(connection, 'Accept-Ranges: bytes')
+#     http_body(connection, content)
 
 def deliver_js(connection, filename):
     """Deliver Javascript"""
@@ -106,6 +107,31 @@ def deliver_json(connection, filename):
     deliver_json_string(connection, content)
 
 
+def parse_form_data(request):
+    # Extract the method and URI path
+    method, path = parse_http(request)
+
+    # Split the request into headers and body
+    headers, body = request.decode().split(hsep + hsep, 1)
+
+    # Parse the form data
+    parsed_form_data = {}
+    form_data_pairs = body.split('&')
+    for pair in form_data_pairs:
+        question, answer = pair.split('=')
+        if question.startswith("question"):
+            # Extract the question number and value from the question parameter
+            question_number = (question.split("%5B")[1].split("%5D")[0])
+            parsed_form_data[question_number] = int(answer)
+        else:
+            parsed_form_data[question] = answer
+
+    print(json.dumps(parsed_form_data))
+
+    # Convert the parsed form data to JSON and return it
+    return json.dumps(parsed_form_data)
+
+
 # def authenticate(connection, request):
 #     key = parse_authentication(request)
 #     correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
@@ -122,7 +148,7 @@ def deliver_json(connection, filename):
 # request handler
 def do_request(connectionSocket):
     # Extract just the HTTP command (method) and path from the request
-    request = connectionSocket.recv(1024)
+    request = connectionSocket.recv(20240)
     cmd, path = parse_http(request)
     print(cmd)
     print(path)
@@ -131,10 +157,9 @@ def do_request(connectionSocket):
         deliver_html(connectionSocket, 'index.html')
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
-        deliver_gif(connectionSocket, path.strip('/'))
+    #     deliver_gif(connectionSocket, path.strip('/'))
     elif cmd == 'POST' and path == '/analysis':
-        for line in request.decode().split(hsep):
-            print('#', line)
+        parse_form_data(request)
         deliver_200(connectionSocket)
     else:
         deliver_404(connectionSocket)

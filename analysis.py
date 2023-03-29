@@ -1,128 +1,43 @@
-import json
-import cgi
-import analysis
-import socket
-import _thread
+job_scores_total = {}
+for job, scores in job_scores.items():
+    total = 0
+    for qno, response in responses.items():
+        total += response * scores[qno-1]
+    job_scores_total[job] = total
 
-hsep = '\r\n'
+job_scores = {
+    "ceo": [5, 4, 5, 5, 2, 5, 3, 5, 1, 5, 3, 2, 3, 2, 2, 2, 1, 1, 2, 5],
+    "astronaut": [5, 5, 5, 4, 4, 4, 4, 5, 2, 4, 4, 2, 2, 3, 2, 2, 2, 2, 5, 4],
+    "doctor": [5, 4, 5, 5, 2, 5, 3, 5, 4, 5, 4, 2, 4, 4, 2, 2, 2, 2, 4, 4],
+    "model": [4, 2, 5, 2, 5, 2, 4, 4, 2, 3, 3, 3, 3, 3, 5, 4, 5, 4, 4, 4],
+    "rockstar": [4, 2, 4, 2, 5, 2, 5, 5, 4, 4, 4, 4, 4, 4, 5, 4, 5, 4, 4, 4],
+    "garbage": [1, 5, 1, 3, 5, 1, 1, 5, 2, 1, 1, 5, 5, 5, 4, 5, 5, 5, 1, 1],
+}
 
-# Here define some convenience functions
-# ...
+job_scores_total = {}
+for job, scores in job_scores.items():
+    total = 0
+    for qno, response in responses.items():
+        total += response * scores[qno-1]
+    job_scores_total[job] = total
 
-# This is the main function to handle incoming requests
-def handle_request(connection, address):
-    # Receive and parse the HTTP request
-    request = connection.recv(4096)
-    method, path = parse_http(request)
+best_job = max(job_scores_total, key=job_scores_total.get)
 
-    # Handle POST requests to /analysis
-    if method == 'POST' and path == '/analysis':
-        # Parse the form data using cgi.FieldStorage
-        form = cgi.FieldStorage(
-            fp=request,
-            headers=request.decode().split(hsep)[1:-2],
-            environ={'REQUEST_METHOD': 'POST'}
-        )
-
-        # Construct a dictionary from the form data
-        data = {
-            'name': form.getvalue('name'),
-            'gender': form.getvalue('gender'),
-            'birthyear': form.getvalue('birthyear'),
-            'birthplace': form.getvalue('birthplace'),
-            'residence': form.getvalue('residence'),
-            'job': form.getvalue('job'),
-            'pets': form.getlist('pets'),
-            'message': form.getvalue('message'),
-            'question': [int(form.getvalue('question['+str(i)+']')) for i in range(1,21)]
-        }
-
-        # Call your analysis function with the data
-        result = analysis.analyze(data)
-
-        # Send the JSON-encoded result back to the client
-        http_status(connection, '200 OK')
-        connection.send(('Content-Type: application/json' + hsep).encode())
-        connection.send(('Access-Control-Allow-Origin: *' + hsep).encode())
-        connection.send(hsep.encode())
-        connection.send(json.dumps(result).encode())
-
-    # Handle all other requests with a 404 error
-    else:
-        http_status(connection, '404 Not Found')
-        connection.send(('Content-Type: text/html' + hsep).encode())
-        connection.send(hsep.encode())
-        connection.send(('Page not found' + hsep).encode())
-
-    # Close the connection
-    connection.close()
-
-def handle_method(client_socket):
-    # Read the request from the client
-    request = client_socket.recv(1024).decode()
-
-    # Extract the method, path, and headers from the request
-    method, path, headers = parse_request(request)
-
-    # Send a response back to the client
-    if method == "GET" and path == "/":
-        response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello, world!"
-    else:
-        response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot Found"
-
-    client_socket.send(response.encode())
-    client_socket.close()
-
-
-def parse_request(request):
-    lines = request.split("\r\n")
-    method, path, version = lines[0].split()
-    headers = {}
-    for line in lines[1:]:
-        if line:
-            key, value = line.split(": ")
-            headers[key] = value
-    return method, path, headers
-
-def parse_form_data(request):
-    # Extract the method and URI path
-    method, path = parse_http(request)
-
-    # Check if the method is POST
-    if method != 'POST':
-        return None
-
-    # Split the request into headers and body
-    headers, body = request.decode().split(hsep+hsep, 1)
-
-    # Parse the form data
-    data = {}
-    for field in body.split(hsep):
-        if '=' in field:
-            key, value = field.split('=', 1)
-            data[key] = value
-
-    # Convert the form data to JSON format
-    json_data = {
-        'name': data.get('name'),
-        'gender': data.get('gender'),
-        'birthyear': data.get('birthyear'),
-        'birthplace': data.get('birthplace'),
-        'residence': data.get('residence'),
-        'job': data.get('job'),
-        'pets': data.getlist('pets[]'),
-        'message': data.get('message'),
-        'question': {k: int(v) for k, v in data.items() if k.startswith('question[')}
-    }
-
-    return json_data
-
-# might need to decode first : form_data = connection.recv(1024)
-# decoded_data = form_data.decode('utf-8')
-
-# Decode the form data
-form_data = connection.recv(1024)
-decoded_data = form_data.decode('utf-8')
-
-# Parse the form data as JSON
-json_data = json.loads(decoded_data)
+# In the code you provided, job_scores_total is a dictionary that will contain the total score for each job. The
+# outer for loop iterates over each item in the job_scores dictionary, which contains a mapping of each job to a list
+# of scores representing how important each personality trait is for that job.
+#
+# Inside the outer loop, a new variable total is initialized to 0. The inner for loop then iterates over each item in
+# the responses dictionary, which maps each question number to the user's response (a score from 1 to 5) for that
+# question.
+#
+# For each question, the score for the corresponding personality trait is looked up in the scores list using the
+# question number as an index (scores[qno-1]). This score is then multiplied by the user's response for that question
+# (response), and the result is added to the running total (total += response * scores[qno-1]).
+#
+# Once all questions have been processed for a given job, the total score for that job is stored in the
+# job_scores_total dictionary using the job name as the key (job_scores_total[job] = total).
+#
+# This process is repeated for each job in the job_scores dictionary, resulting in a final dictionary
+# job_scores_total containing the total score for each job. The job with the highest score represents the best match
+# for the user's personality traits, and can be returned as the recommended job.

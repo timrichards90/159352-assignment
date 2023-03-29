@@ -21,3 +21,8 @@
 #     else:
 #         # if not authenticated do not serve the file
 #         pass
+import json
+
+if __name__ == '__main__':
+    q = 'question%5B1%5D'
+    print(q.split("%5B")[1].split("%5D")[0])
