@@ -128,6 +128,9 @@ def parse_form_data(request):
 
     print(json.dumps(parsed_form_data))
 
+    with open("file.json", "w") as file:
+        json.dump(parsed_form_data, file)
+
     # Convert the parsed form data to JSON and return it
     return json.dumps(parsed_form_data)
 
