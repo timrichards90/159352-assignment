@@ -114,15 +114,24 @@ def parse_form_data(request):
     # Split the request into headers and body
     headers, body = request.decode().split(hsep + hsep, 1)
 
+    print(body)
+
     # Parse the form data
     parsed_form_data = {}
     form_data_pairs = body.split('&')
+    print(form_data_pairs)
     for pair in form_data_pairs:
         question, answer = pair.split('=')
         if question.startswith("question"):
             # Extract the question number and value from the question parameter
             question_number = (question.split("%5B")[1].split("%5D")[0])
             parsed_form_data[question_number] = int(answer)
+        # elif question == "pets[]":
+        elif question.startswith("pets"):
+            # Append the pet value to the pets array in parsed_form_data
+            if "pets" not in parsed_form_data:
+                parsed_form_data["pets"] = []
+            parsed_form_data["pets"].append(answer)
         else:
             parsed_form_data[question] = answer
 
