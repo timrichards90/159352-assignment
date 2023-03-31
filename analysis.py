@@ -5,6 +5,9 @@ import requests
 
 if __name__ == '__main__':
 
+    # api key aeb1f7
+    # api uri https://www.omdbapi.com/?apikey=39aeb1f7&t=alien
+
     f = open('file.json')
 
     data = json.load(f)
