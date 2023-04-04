@@ -126,7 +126,8 @@ def parse_form_data(request):
             # Extract the question number and value from the question parameter
             question_number = (question.split("%5B")[1].split("%5D")[0])
             parsed_form_data[question_number] = int(answer)
-        # elif question == "pets[]":
+        elif question.startswith("message"):
+            parsed_form_data[question] = answer.replace('+', ' ')
         elif question.startswith("pets"):
             # Append the pet value to the pets array in parsed_form_data
             if "pets" not in parsed_form_data:
@@ -137,7 +138,7 @@ def parse_form_data(request):
 
     print(json.dumps(parsed_form_data))
 
-    with open("file.json", "w") as file:
+    with open("input.json", "w") as file:
         json.dump(parsed_form_data, file)
 
     # Convert the parsed form data to JSON and return it
@@ -170,6 +171,10 @@ def do_request(connectionSocket):
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
     #     deliver_gif(connectionSocket, path.strip('/'))
+    elif cmd == 'GET' and path == '/view/input':
+        deliver_json(connectionSocket, 'input.json')
+    elif cmd == 'GET' and path == '/view/profile':
+        deliver_json(connectionSocket, 'profile.json')
     elif cmd == 'POST' and path == '/analysis':
         parse_form_data(request)
         deliver_200(connectionSocket)

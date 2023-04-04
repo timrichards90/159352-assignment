@@ -5,22 +5,16 @@ import requests
 
 if __name__ == '__main__':
 
-    # api key aeb1f7
-    # api uri https://www.omdbapi.com/?apikey=39aeb1f7&t=alien
-
-    f = open('file.json')
-
-    data = json.load(f)
-
-    print(data)
+    with open('input.json') as f:
+        data = json.load(f)
 
     responses = {}
+    profile = {}
+    job_scores_total = {}
 
     for k, v in data.items():
         if isinstance(v, int):
             responses[k] = v
-
-    print(responses)
 
     job_scores = {
         "ceo": [4, 5, 5, 2, 2, 5, 2, 2, 5, 2, 3, 1, 3, 2, 5, 3, 5, 5, 2, 2],
@@ -31,24 +25,51 @@ if __name__ == '__main__':
         "garbage": [1, 1, 1, 3, 5, 1, 1, 5, 2, 1, 5, 5, 5, 5, 1, 5, 2, 1, 3, 3],
     }
 
-    job_scores_total = {}
+    apis = {
+        "dog": "https://dog.ceo/api/breeds/image/random",
+        "cat": "https://api.thecatapi.com/v1/images/search",
+        "duck": "https://random-d.uk/api/v2/random",
+        "ceo": "https://www.omdbapi.com/?apikey=39aeb1f7&t=the+wolf+of+wall+street",
+        "astronaut": "https://www.omdbapi.com/?apikey=39aeb1f7&t=alien",
+        "doctor": "https://www.omdbapi.com/?apikey=39aeb1f7&t=doctor+who",
+        "model": "https://www.omdbapi.com/?apikey=39aeb1f7&t=zoolander",
+        "rockstar": "https://www.omdbapi.com/?apikey=39aeb1f7&t=school+of+rock",
+        "garbage": "https://www.omdbapi.com/?apikey=39aeb1f7&t=clean"
+    }
 
+    suitability = 5
     for job, scores in job_scores.items():
         total = 0
         for qno, response in responses.items():
-            # print(qno, " ", response)
             total += response * scores[int(qno) - 1]
         job_scores_total[job] = total
 
     best_job = max(job_scores_total, key=job_scores_total.get)
 
-    print(best_job)
+    # print("Your suitability for each job is:")
 
-    apis = {
-        "dog": "https://dog.ceo/api/breeds/image/random",
-        "cat": "https://api.thecatapi.com/v1/images/search",
-        "duck": "https://random-d.uk/api/v2/random"
-    }
+    desired_job = data['job']
+    suitability = 6
+
+    for job, total in job_scores_total.items():
+        if job_scores_total[job] > job_scores_total[desired_job]:
+            suitability -= 1
+
+    # print(suitability)
+    #
+    # for job, total in job_scores_total.items():
+    #     print(f"{job}: {total}")
+    #
+    # print(f"Based on your responses, you are best suited for the job of {best_job}.")
+
+    movie_uri = apis[desired_job]
+    response = requests.get(movie_uri)
+    movie_data = json.loads(response.text)
+
+    profile['desired_job'] = desired_job
+    profile['best_suited_job'] = best_job
+    profile['suitability_for_chosen_job'] = suitability
+    profile['movie'] = movie_data
 
     if "pets" in data:
         for pet in data["pets"]:
@@ -63,6 +84,7 @@ if __name__ == '__main__':
                     os.remove(filename)
                 with open(filename, "wb") as f:
                     f.write(response.content)
+                profile[pet] = filename
 
             if pet == 'cat':
                 uri = 'https://api.thecatapi.com/v1/images/search'
@@ -73,6 +95,7 @@ if __name__ == '__main__':
                 filename = os.path.basename(image_uri)
                 with open(filename, "wb") as f:
                     f.write(response.content)
+                profile[pet] = filename
 
             if pet == 'duck':
                 uri = 'https://random-d.uk/api/v2/random'
@@ -83,3 +106,9 @@ if __name__ == '__main__':
                 filename = os.path.basename(image_uri)
                 with open(filename, "wb") as f:
                     f.write(response.content)
+                profile[pet] = filename
+
+    print(json.dumps(profile))
+
+    with open("profile.json", "w") as file:
+        json.dump(profile, file)
