@@ -10,6 +10,51 @@
 
 <!-- Javascript here or put in a separate .js file -->
 <script>
+  function new_window() {
+    const uri = "http://localhost:8080/form";
+    const config = "toolbar=no";  // new separate window
+    const win = window.open(uri, "", config);
+  }
+
+  function view_input() {
+    let xmlhttp = new XMLHttpRequest()
+      xmlhttp.onload = function () {
+        document.getElementById("input_text").innerHTML = xmlhttp.responseText;
+      }
+      xmlhttp.open("GET", "input.json", true);
+      xmlhttp.send();
+  }
+
+//   function view_input() {
+//   let xmlhttp = new XMLHttpRequest();
+//   xmlhttp.onload = function() {
+//     const input = JSON.parse(xmlhttp.responseText);
+//     document.getElementById("input_text").innerHTML = xmlhttp.responseText;
+//     const questionsContainer = document.getElementById("questions");
+//     for (let i = 1; i <= 20; i++) {
+//       const question = `q${i}`;
+//       const answer = input[i];
+//       const answerText = answer === 1 ? "Yes" : "No";
+//       document.getElementById(question).innerHTML += answerText;
+//     }
+//     questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
+//   }
+//   xmlhttp.open("GET", "/api/input", true);
+//   xmlhttp.send();
+// }
+
+  function view_results() {
+    let xmlhttp = new XMLHttpRequest()
+      xmlhttp.onload = function () {
+        document.getElementById("profile_text").innerHTML = xmlhttp.responseText;
+      }
+      xmlhttp.open("GET", "profile.json", true);
+      xmlhttp.send();
+
+      // toggle display of questions container
+      const questionsContainer = document.getElementById("questions");
+      questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
+  }
 </script>
 
 <body>
@@ -19,6 +64,47 @@
   <p>Welcome to your psychological profile</p>
 
   <!-- Put in various widgets as appropriate -->
+  <button type="button" onclick=new_window()>
+    Fetch form
+  </button>
+
+  <button type="button" onclick=view_input()>
+    View input
+  </button>
+
+  <button type="button" onclick=view_results()>
+    View input
+  </button>
+
+  <h3>input text</h3>
+  <pre id="input_text"></pre>
+
+
+  <h3>profile text</h3>
+  <pre id="profile_text"></pre>
+
+  <div id="questions">
+    <p id="q1">is talkative: </p>
+    <p id="q2">does a thorough job: </p>
+    <p id="q3">is original, comes up with new ideas: </p>
+    <p id="q4">is helpful, unselfish with others: </p>
+    <p id="q5">can be somewhat careless: </p>
+    <p id="q6">is relaxed, handles stress well: </p>
+    <p id="q7">is curious about many things: </p>
+    <p id="q8">is full of energy: </p>
+    <p id="q9">starts quarrels with others: </p>
+    <p id="q10">is a reliable worker: </p>
+    <p id="q11">is a deep thinker: </p>
+    <p id="q12">tends to be disorganized: </p>
+    <p id="q13">worries a lot: </p>
+    <p id="q14">tends to be quiet: </p>
+    <p id="q15">tends to be lazy: </p>
+    <p id="q16">sometimes shy: </p>
+    <p id="q17">is sometimes rude to others: </p>
+    <p id="q18">tends to find fault with others: </p>
+    <p id="q19">gets nervous easily: </p>
+    <p id="q20">likes to work in a team: </p>
+  </div>
 
 </body>
 </html>

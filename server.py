@@ -283,6 +283,10 @@ def do_request(connectionSocket):
         deliver_json(connectionSocket, 'input.json')
     elif cmd == 'GET' and path == '/view/profile':
         deliver_json(connectionSocket, 'profile.json')
+    elif cmd == 'GET' and path == '/input.json':
+        deliver_json(connectionSocket, path.strip('/'))
+    elif cmd == 'GET' and path == '/profile.json':
+        deliver_json(connectionSocket, path.strip('/'))
     elif cmd == 'POST' and path == '/analysis':
         parse_form_data(request)
         analyze()
