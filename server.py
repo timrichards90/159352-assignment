@@ -127,7 +127,7 @@ def parse_form_data(request):
             # Extract the question number and value from the question parameter
             question_number = (question.split("%5B")[1].split("%5D")[0])
             parsed_form_data[question_number] = int(answer)
-        elif question.startswith("message"):
+        elif question.startswith("message") or question.startswith("residence"):
             parsed_form_data[question] = answer.replace('+', ' ')
         elif question.startswith("pets"):
             # Append the pet value to the pets array in parsed_form_data
