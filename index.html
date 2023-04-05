@@ -19,7 +19,20 @@
   function view_input() {
     let xmlhttp = new XMLHttpRequest()
       xmlhttp.onload = function () {
+        const input = JSON.parse(xmlhttp.responseText);
         document.getElementById("input_text").innerHTML = xmlhttp.responseText;
+        const questionsContainer = document.getElementById("questions");
+        document.getElementById("name").innerHTML += input['name']
+        document.getElementById("gender").innerHTML += input['gender']
+        document.getElementById("birthyear").innerHTML += input['birthyear']
+        document.getElementById("birthplace").innerHTML += input['birthplace']
+        document.getElementById("residence").innerHTML += input['residence']
+        for (let i = 1; i <= 20; i++) {
+          const question = `q${i}`;
+          const answer = input[i];
+          document.getElementById(question).innerHTML += answer;
+          }
+        // questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
       }
       xmlhttp.open("GET", "input.json", true);
       xmlhttp.send();
@@ -53,7 +66,7 @@
 
       // toggle display of questions container
       const questionsContainer = document.getElementById("questions");
-      questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
+      // questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
   }
 </script>
 
@@ -73,7 +86,7 @@
   </button>
 
   <button type="button" onclick=view_results()>
-    View input
+    View results
   </button>
 
   <h3>input text</h3>
@@ -84,6 +97,11 @@
   <pre id="profile_text"></pre>
 
   <div id="questions">
+    <p id="name">Input your name: </p>
+    <p id="gender">What is your gender? </p>
+    <p id="birthyear">In what year were you born? </p>
+    <p id="birthplace">What is the country of your birth? </p>
+    <p id="residence">What country do you live in now? </p>
     <p id="q1">is talkative: </p>
     <p id="q2">does a thorough job: </p>
     <p id="q3">is original, comes up with new ideas: </p>
