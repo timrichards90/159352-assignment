@@ -4,7 +4,6 @@ import socket
 import _thread
 import requests
 
-
 hsep = '\r\n'
 
 
@@ -107,6 +106,18 @@ def deliver_json(connection, filename):
     content = gobble_file(filename)
     deliver_json_string(connection, content)
 
+def deliver_pets(connection):
+    with open('profile.json') as f:
+        data = json.load(f)
+        pets = data['pets']
+        connection.sendall(b'HTTP/1.1 200 OK\r\n')
+        connection.sendall(b'Content-Type: image/jpeg\r\n')
+        connection.sendall(b'\r\n')
+
+        for pet in pets:
+            with open(pet['image'], 'rb') as img:
+                connection.sendall(img.read())
+
 
 def parse_form_data(request):
     # Extract the method and URI path
@@ -115,19 +126,20 @@ def parse_form_data(request):
     # Split the request into headers and body
     headers, body = request.decode().split(hsep + hsep, 1)
 
-    print(body)
+    # print(body)
 
     # Parse the form data
     parsed_form_data = {}
     form_data_pairs = body.split('&')
-    print(form_data_pairs)
+    # print(form_data_pairs)
     for pair in form_data_pairs:
         question, answer = pair.split('=')
         if question.startswith("question"):
             # Extract the question number and value from the question parameter
             question_number = (question.split("%5B")[1].split("%5D")[0])
             parsed_form_data[question_number] = int(answer)
-        elif question.startswith("message") or question.startswith("residence"):
+        elif question.startswith("message") or question.startswith("residence") or question.startswith(
+                "birthplace") or question.startswith("name"):
             parsed_form_data[question] = answer.replace('+', ' ')
         elif question.startswith("pets"):
             # Append the pet value to the pets array in parsed_form_data
@@ -137,7 +149,7 @@ def parse_form_data(request):
         else:
             parsed_form_data[question] = answer
 
-    print(json.dumps(parsed_form_data))
+    # print(json.dumps(parsed_form_data))
 
     with open("input.json", "w") as file:
         json.dump(parsed_form_data, file)
@@ -185,25 +197,43 @@ def analyze():
 
     best_job = max(job_scores_total, key=job_scores_total.get)
 
-    # print("Your suitability for each job is:")
-
     desired_job = data['job']
+
     suitability = 6
 
     for job, total in job_scores_total.items():
         if job_scores_total[job] > job_scores_total[desired_job]:
             suitability -= 1
 
-    # print(suitability)
-    #
-    # for job, total in job_scores_total.items():
-    #     print(f"{job}: {total}")
-    #
-    # print(f"Based on your responses, you are best suited for the job of {best_job}.")
-
     movie_uri = apis[desired_job]
     response = requests.get(movie_uri)
     movie_data = json.loads(response.text)
+
+    if desired_job == 'ceo':
+        desired_job = 'CEO of large mega-corporation'
+    elif desired_job == 'astronaut':
+        desired_job = 'Astronaut'
+    elif desired_job == 'doctor':
+        desired_job = 'Medical doctor'
+    elif desired_job == 'model':
+        desired_job = 'Fashion model'
+    elif desired_job == 'rockstar':
+        desired_job = 'Rock star'
+    else:
+        desired_job = 'Refuse collection operative'
+
+    if best_job == 'ceo':
+        best_job = 'CEO of large mega-corporation'
+    elif best_job == 'astronaut':
+        best_job = 'Astronaut'
+    elif best_job == 'doctor':
+        best_job = 'Medical doctor'
+    elif best_job == 'model':
+        best_job = 'Fashion model'
+    elif best_job == 'rockstar':
+        best_job = 'Rock star'
+    else:
+        best_job = 'Refuse collection operative'
 
     profile['desired_job'] = desired_job
     profile['best_suited_job'] = best_job
@@ -211,6 +241,7 @@ def analyze():
     profile['movie'] = movie_data
 
     if "pets" in data:
+        profile["pets"] = []
         for pet in data["pets"]:
             if pet == 'dog':
                 uri = 'https://dog.ceo/api/breeds/image/random'
@@ -223,7 +254,7 @@ def analyze():
                     os.remove(filename)
                 with open(filename, "wb") as f:
                     f.write(response.content)
-                profile[pet] = filename
+                profile["pets"].append({"name": pet, "image": filename})
 
             if pet == 'cat':
                 uri = 'https://api.thecatapi.com/v1/images/search'
@@ -234,7 +265,7 @@ def analyze():
                 filename = os.path.basename(image_uri)
                 with open(filename, "wb") as f:
                     f.write(response.content)
-                profile[pet] = filename
+                profile["pets"].append({"name": pet, "image": filename})
 
             if pet == 'duck':
                 uri = 'https://random-d.uk/api/v2/random'
@@ -245,9 +276,9 @@ def analyze():
                 filename = os.path.basename(image_uri)
                 with open(filename, "wb") as f:
                     f.write(response.content)
-                profile[pet] = filename
+                profile["pets"].append({"name": pet, "image": filename})
 
-    print(json.dumps(profile))
+    # print(json.dumps(profile))
 
     with open("profile.json", "w") as file:
         json.dump(profile, file)
@@ -287,6 +318,8 @@ def do_request(connectionSocket):
         deliver_json(connectionSocket, path.strip('/'))
     elif cmd == 'GET' and path == '/profile.json':
         deliver_json(connectionSocket, path.strip('/'))
+    elif cmd == 'GET' and path == '/pets':
+        deliver_pets(connectionSocket)
     elif cmd == 'POST' and path == '/analysis':
         parse_form_data(request)
         analyze()
@@ -340,7 +373,7 @@ def main(serverPort):
 
     # Start listening for new connections
     mySocket.listen()
-    print('The server is ready to receive messages on port:', serverPort)
+    # print('The server is ready to receive messages on port:', serverPort)
 
     while True:
         # Accept a connection from a client

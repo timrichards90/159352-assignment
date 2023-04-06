@@ -25,7 +25,6 @@
         document.getElementById("birthyear").innerHTML = "In what year were you born? " + input['birthyear'];
         document.getElementById("birthplace").innerHTML = "What is the country of your birth? " + input['birthplace'];
         document.getElementById("residence").innerHTML = "What country do you live in now? " + input['residence'];
-        document.getElementById("message").innerHTML = "Enter a message or comment if you have one: " + input['message'];
         for (let i = 1; i <= 20; i++) {
           const question = `q${i}`;
           const answer = input[i];
@@ -33,6 +32,9 @@
           answerElem.innerHTML = answerElem.innerHTML.replace(/\d/g, '');
           answerElem.innerHTML += answer;
           }
+        document.getElementById("job").innerHTML = "Which of these jobs would be most appealing to you? " + input['job']
+        document.getElementById("pet").innerHTML = "Which of these animals would appeal to you as a pet? " + input['pets']
+        document.getElementById("message").innerHTML = "Enter a message or comment if you have one: " + input['message'];
         const questionsContainer = document.getElementById("questions");
         questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
         const resultsContainer = document.getElementById("results");
@@ -50,7 +52,7 @@
         document.getElementById("suitability").innerHTML = "Our algorithm has calculated your suitability for this " +
                 "job as " + input["suitability_for_chosen_job"] + "/5";
         document.getElementById("best_job").innerHTML = "Based on your results of our personality test, we have " +
-                "concluded that the most suitable job for you is " + input["best_suited_job"];
+                "concluded that the most suitable job for you is '" + input["best_suited_job"] +"'";
         document.getElementById("movie").innerHTML = "Because you selected " + input['desired_job'] + " as your " +
                 "desired job, we believe this movie may be of interest to you: " + input.movie.Title + " - " +
                 input.movie.Plot;
@@ -58,6 +60,22 @@
         resultsContainer.style.display = resultsContainer.style.display === "none" ? "block" : "none";
         const questionsContainer = document.getElementById("questions");
         questionsContainer.style.display = "none"; // Add this line to hide the questions container
+        const pets = input["pets"];
+        const petsContainer = document.getElementById("pets-container");
+        petsContainer.innerHTML = ""; // clear any existing content
+        for (let i = 0; i < pets.length; i++) {
+          const pet = pets[i];
+          const petImage = document.createElement("img");
+          petImage.src = pet.image;
+          petImage.alt = pet.name;
+          petsContainer.appendChild(petImage);
+          // Add the following lines to send the image to the server
+          const formData = new FormData();
+          formData.append('pet', pet.image);
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/upload-pet-image');
+          xhr.send(formData);
+        }
       }
       xmlhttp.open("GET", "profile.json", true);
       xmlhttp.send();
@@ -109,6 +127,8 @@
     <p id="q18">tends to find fault with others: </p>
     <p id="q19">gets nervous easily: </p>
     <p id="q20">likes to work in a team: </p>
+    <p id="job"></p>
+    <p id="pet"></p>
     <p id="message"></p>
   </div>
 
@@ -118,6 +138,8 @@
     <p id="best_job"></p>
     <p id="movie"></p>
   </div>
+
+  <div id="petsContainer"></div>
 
 </body>
 </html>
