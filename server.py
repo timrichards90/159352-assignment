@@ -70,29 +70,13 @@ def deliver_html(connection, filename):
     http_body(connection, content.encode())
 
 
-def deliver_jpeg(connection, filename):
+def deliver_jpg(connection, filename):
     """Deliver content of JPEG image file"""
     deliver_200(connection)
     content = gobble_file(filename, binary=True)
-    http_header(connection, 'Content-Type: image/jpeg')
+    http_header(connection, 'Content-Type: image/jpg')
     http_header(connection, 'Accept-Ranges: bytes')
     http_body(connection, content)
-
-
-# def deliver_gif(connection, filename):
-#     """Deliver content of GIF image file"""
-#     content = gobble_file(filename, binary=True)
-#     deliver_200(connection)
-#     http_header(connection, 'Content-Type: image/gif')
-#     http_header(connection, 'Accept-Ranges: bytes')
-#     http_body(connection, content)
-
-def deliver_js(connection, filename):
-    """Deliver Javascript"""
-    content = gobble_file(filename)
-    deliver_200(connection)
-    http_header(connection, 'Content-Type: text/javascript')
-    http_body(connection, content.encode())
 
 
 def deliver_json_string(connection, jsonstr):
@@ -105,18 +89,6 @@ def deliver_json(connection, filename):
     """Deliver JSON stored in a server-side file"""
     content = gobble_file(filename)
     deliver_json_string(connection, content)
-
-def deliver_pets(connection):
-    with open('profile.json') as f:
-        data = json.load(f)
-        pets = data['pets']
-        connection.sendall(b'HTTP/1.1 200 OK\r\n')
-        connection.sendall(b'Content-Type: image/jpeg\r\n')
-        connection.sendall(b'\r\n')
-
-        for pet in pets:
-            with open(pet['image'], 'rb') as img:
-                connection.sendall(img.read())
 
 
 def parse_form_data(request):
@@ -278,7 +250,8 @@ def analyze():
                     f.write(response.content)
                 profile["pets"].append({"name": pet, "image": filename})
 
-    # print(json.dumps(profile))
+    with open("pets.json", "w") as file:
+        json.dump(profile["pets"], file)
 
     with open("profile.json", "w") as file:
         json.dump(profile, file)
@@ -309,7 +282,6 @@ def do_request(connectionSocket):
         deliver_html(connectionSocket, 'index.html')
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
-    #     deliver_gif(connectionSocket, path.strip('/'))
     elif cmd == 'GET' and path == '/view/input':
         deliver_json(connectionSocket, 'input.json')
     elif cmd == 'GET' and path == '/view/profile':
@@ -318,20 +290,14 @@ def do_request(connectionSocket):
         deliver_json(connectionSocket, path.strip('/'))
     elif cmd == 'GET' and path == '/profile.json':
         deliver_json(connectionSocket, path.strip('/'))
-    elif cmd == 'GET' and path == '/pets':
-        deliver_pets(connectionSocket)
+    elif cmd == 'GET' and path.endswith('.jpg'):
+        deliver_jpg(connectionSocket, path.strip('/'))
     elif cmd == 'POST' and path == '/analysis':
         parse_form_data(request)
         analyze()
         deliver_200(connectionSocket)
     else:
         deliver_404(connectionSocket)
-
-    # elif cmd == 'GET' and path == '/datefunc.js':
-    #     deliver_js(connectionSocket, 'datefunc.js')
-    # elif path == '/dachshund.jpeg':
-    #     deliver_jpeg(connectionSocket, path.strip('/'))
-    # elif path in ['/pic_bulboff.gif', '/pic_bulbon.gif', '/sun.gif']:
 
     # Implement our URI path mapping scheme - here remove leading and
     # trailing '/' and use what's left as a local file name

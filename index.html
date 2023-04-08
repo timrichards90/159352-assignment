@@ -44,42 +44,55 @@
       xmlhttp.send();
   }
 
-  function view_results() {
-    let xmlhttp = new XMLHttpRequest()
-      xmlhttp.onload = function () {
-        const input = JSON.parse(xmlhttp.responseText);
-        document.getElementById("desired_job").innerHTML = "You chose '" + input['desired_job'] + "' as your desired job";
-        document.getElementById("suitability").innerHTML = "Our algorithm has calculated your suitability for this " +
-                "job as " + input["suitability_for_chosen_job"] + "/5";
-        document.getElementById("best_job").innerHTML = "Based on your results of our personality test, we have " +
-                "concluded that the most suitable job for you is '" + input["best_suited_job"] +"'";
-        document.getElementById("movie").innerHTML = "Because you selected " + input['desired_job'] + " as your " +
-                "desired job, we believe this movie may be of interest to you: " + input.movie.Title + " - " +
-                input.movie.Plot;
-        const resultsContainer = document.getElementById("results");
-        resultsContainer.style.display = resultsContainer.style.display === "none" ? "block" : "none";
-        const questionsContainer = document.getElementById("questions");
-        questionsContainer.style.display = "none"; // Add this line to hide the questions container
-        const pets = input["pets"];
-        const petsContainer = document.getElementById("pets-container");
-        petsContainer.innerHTML = ""; // clear any existing content
-        for (let i = 0; i < pets.length; i++) {
-          const pet = pets[i];
-          const petImage = document.createElement("img");
-          petImage.src = pet.image;
-          petImage.alt = pet.name;
-          petsContainer.appendChild(petImage);
-          // Add the following lines to send the image to the server
-          const formData = new FormData();
-          formData.append('pet', pet.image);
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/upload-pet-image');
-          xhr.send(formData);
-        }
-      }
-      xmlhttp.open("GET", "profile.json", true);
-      xmlhttp.send();
-  }
+function view_results() {
+  let xmlhttp = new XMLHttpRequest();
+  xmlhttp.onload = function () {
+    const input = JSON.parse(xmlhttp.responseText);
+    document.getElementById("desired_job").innerHTML = "You chose '" + input['desired_job'] + "' as your desired job";
+    document.getElementById("suitability").innerHTML = "Our algorithm has calculated your suitability for this " +
+      "job as " + input["suitability_for_chosen_job"] + "/5";
+    document.getElementById("best_job").innerHTML = "Based on your results of our personality test, we have " +
+      "concluded that the most suitable job for you is '" + input["best_suited_job"] +"'";
+    document.getElementById("movie").innerHTML = "Because you selected '" + input['desired_job'] + "' as your " +
+      "desired job, we believe this movie may be of interest to you: " + input.movie.Title + " - " +
+      input.movie.Plot;
+
+    const img = new Image();
+    img.src = input.pets[0].image;
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0);
+    };
+    canvas.appendChild(img);
+        //
+        //     const pets = input["pets"];
+        // const petsContainer = document.getElementById("pets-container");
+        // petsContainer.innerHTML = ""; // clear any existing content
+        // for (let i = 0; i < pets.length; i++) {
+        //   const pet = pets[i];
+        //   const petImage = document.createElement("img");
+        //   petImage.src = pet.image;
+        //   petImage.alt = pet.name;
+        //   petsContainer.appendChild(petImage);
+        //   // Add the following lines to send the image to the server
+        //   const formData = new FormData();
+        //   formData.append('pet', pet.image);
+        //   const xhr = new XMLHttpRequest();
+        //   xhr.open('POST', '/upload-pet-image');
+        //   xhr.send(formData);
+        // }
+
+    const resultsContainer = document.getElementById("results");
+    resultsContainer.style.display = resultsContainer.style.display === "none" ? "block" : "none";
+    const questionsContainer = document.getElementById("questions");
+    questionsContainer.style.display = "none"; // Add this line to hide the questions container
+  };
+  xmlhttp.open("GET", "profile.json", true);
+  xmlhttp.send();
+}
+
+
 </script>
 
 <body>
@@ -137,9 +150,8 @@
     <p id="suitability"></p>
     <p id="best_job"></p>
     <p id="movie"></p>
+    <canvas id="canvas"></canvas>
   </div>
-
-  <div id="petsContainer"></div>
 
 </body>
 </html>
