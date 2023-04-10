@@ -1,7 +1,5 @@
+<!--Tim Richards 19032315-->
 
-<!-- Front end or landing page for 159.352 Assignment 1
-     Modify in any way you see fit. Feel free to make it look pretty
-  -->
 <!doctype html>
 <html>
 <head>
@@ -19,12 +17,14 @@
   function view_input() {
     let xmlhttp = new XMLHttpRequest()
       xmlhttp.onload = function () {
+
         const input = JSON.parse(xmlhttp.responseText);
         document.getElementById("name").innerHTML = "Input your name: " + input['name'];
         document.getElementById("gender").innerHTML = "What is your gender? " + input['gender'];
         document.getElementById("birthyear").innerHTML = "In what year were you born? " + input['birthyear'];
         document.getElementById("birthplace").innerHTML = "What is the country of your birth? " + input['birthplace'];
         document.getElementById("residence").innerHTML = "What country do you live in now? " + input['residence'];
+
         for (let i = 1; i <= 20; i++) {
           const question = `q${i}`;
           const answer = input[i];
@@ -32,9 +32,11 @@
           answerElem.innerHTML = answerElem.innerHTML.replace(/\d/g, '');
           answerElem.innerHTML += answer;
           }
+
         document.getElementById("job").innerHTML = "Which of these jobs would be most appealing to you? " + input['job']
         document.getElementById("pet").innerHTML = "Which of these animals would appeal to you as a pet? " + input['pets']
         document.getElementById("message").innerHTML = "Enter a message or comment if you have one: " + input['message'];
+
         const questionsContainer = document.getElementById("questions");
         questionsContainer.style.display = questionsContainer.style.display === "none" ? "block" : "none";
         const resultsContainer = document.getElementById("results");
@@ -47,6 +49,7 @@
 function view_results() {
   let xmlhttp = new XMLHttpRequest();
   xmlhttp.onload = function () {
+
     const input = JSON.parse(xmlhttp.responseText);
     document.getElementById("desired_job").innerHTML = "You chose '" + input['desired_job'] + "' as your desired job";
     document.getElementById("suitability").innerHTML = "Our algorithm has calculated your suitability for this " +
@@ -57,31 +60,26 @@ function view_results() {
       "desired job, we believe this movie may be of interest to you: " + input.movie.Title + " - " +
       input.movie.Plot;
 
-    const img = new Image();
-    img.src = input.pets[0].image;
     const canvas = document.getElementById("canvas");
+    canvas.width = 600; // Set the canvas width to a fixed size
+    canvas.height = 400; // Set the canvas height to a fixed size
     const ctx = canvas.getContext("2d");
-    img.onload = function() {
-      ctx.drawImage(img, 0, 0);
-    };
-    canvas.appendChild(img);
-        //
-        //     const pets = input["pets"];
-        // const petsContainer = document.getElementById("pets-container");
-        // petsContainer.innerHTML = ""; // clear any existing content
-        // for (let i = 0; i < pets.length; i++) {
-        //   const pet = pets[i];
-        //   const petImage = document.createElement("img");
-        //   petImage.src = pet.image;
-        //   petImage.alt = pet.name;
-        //   petsContainer.appendChild(petImage);
-        //   // Add the following lines to send the image to the server
-        //   const formData = new FormData();
-        //   formData.append('pet', pet.image);
-        //   const xhr = new XMLHttpRequest();
-        //   xhr.open('POST', '/upload-pet-image');
-        //   xhr.send(formData);
-        // }
+    if(input.pets !== undefined){
+      let loadedImages = 0;
+      input.pets.forEach((pet, index) => {
+        const img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, index * 200, 0, 200, 200); // Draw each pet image at a different position on the canvas
+          loadedImages++;
+          if (loadedImages === input.pets.length) {
+            canvas.style.display = "block"; // Make the canvas visible after all pet images have been drawn
+          }
+        };
+        img.src = pet.image;
+      });
+    } else {
+      canvas.style.display = "none"; // Hide the canvas if there are no pets to display
+    }
 
     const resultsContainer = document.getElementById("results");
     resultsContainer.style.display = resultsContainer.style.display === "none" ? "block" : "none";
@@ -91,6 +89,9 @@ function view_results() {
   xmlhttp.open("GET", "profile.json", true);
   xmlhttp.send();
 }
+
+
+
 
 
 </script>

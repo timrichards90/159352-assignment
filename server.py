@@ -1,3 +1,5 @@
+# Tim Richards 19032315
+
 import json
 import os
 import socket
@@ -7,11 +9,7 @@ import requests
 hsep = '\r\n'
 
 
-# Here define some convenience functions
 def parse_http(request):
-    """Partial solution to Ex. 2. This extracts just the method and URI path
-    ignoring everything else"""
-    # print(request)
     reqline = request.decode().split(hsep).pop(0)
     try:
         cmd, path, prot = reqline.split()
@@ -26,9 +24,7 @@ def parse_authentication(request):
     return key
 
 
-# Some convenience functions for writing and sending the status line
 def http_status(connection, status):
-    """Write and send a status line"""
     connection.send(('HTTP/1.1 ' + status + hsep).encode())
 
 
@@ -41,18 +37,15 @@ def deliver_404(connection):
 
 
 def http_header(connection, headerline):
-    """Send the header line input as Python string instance"""
     connection.send((headerline + hsep).encode())
 
 
 def http_body(connection, payload):
-    """Send payload given as byte string"""
     connection.send(hsep.encode())
     connection.send(payload)
 
 
 def gobble_file(filename, binary=False):
-    """General utility to read entire content of file that could be binary"""
     if binary:
         mode = 'rb'
     else:
@@ -63,7 +56,6 @@ def gobble_file(filename, binary=False):
 
 
 def deliver_html(connection, filename):
-    """Deliver content of HTML file"""
     deliver_200(connection)
     content = gobble_file(filename)
     http_header(connection, 'Content-Type: text/html')
@@ -71,7 +63,6 @@ def deliver_html(connection, filename):
 
 
 def deliver_jpg(connection, filename):
-    """Deliver content of JPEG image file"""
     deliver_200(connection)
     content = gobble_file(filename, binary=True)
     http_header(connection, 'Content-Type: image/jpg')
@@ -86,32 +77,24 @@ def deliver_json_string(connection, jsonstr):
 
 
 def deliver_json(connection, filename):
-    """Deliver JSON stored in a server-side file"""
     content = gobble_file(filename)
     deliver_json_string(connection, content)
 
 
 def parse_form_data(request):
-    # Extract the method and URI path
-    method, path = parse_http(request)
-
     # Split the request into headers and body
     headers, body = request.decode().split(hsep + hsep, 1)
-
-    # print(body)
 
     # Parse the form data
     parsed_form_data = {}
     form_data_pairs = body.split('&')
-    # print(form_data_pairs)
     for pair in form_data_pairs:
         question, answer = pair.split('=')
         if question.startswith("question"):
             # Extract the question number and value from the question parameter
             question_number = (question.split("%5B")[1].split("%5D")[0])
             parsed_form_data[question_number] = int(answer)
-        elif question.startswith("message") or question.startswith("residence") or question.startswith(
-                "birthplace") or question.startswith("name"):
+        elif question.startswith(("message", "residence", "birthplace", "name")):
             parsed_form_data[question] = answer.replace('+', ' ')
         elif question.startswith("pets"):
             # Append the pet value to the pets array in parsed_form_data
@@ -120,8 +103,6 @@ def parse_form_data(request):
             parsed_form_data["pets"].append(answer)
         else:
             parsed_form_data[question] = answer
-
-    # print(json.dumps(parsed_form_data))
 
     with open("input.json", "w") as file:
         json.dump(parsed_form_data, file)
@@ -160,114 +141,88 @@ def analyze():
         "garbage": "https://www.omdbapi.com/?apikey=39aeb1f7&t=clean"
     }
 
-    suitability = 5
+    job_names = {
+        'ceo': 'CEO of large mega-corporation',
+        'astronaut': 'Astronaut',
+        'doctor': 'Medical doctor',
+        'model': 'Fashion model',
+        'rockstar': 'Rock star',
+        'refuse': 'Refuse collection operative',
+    }
+
+    # calculate job scores based on user responses
     for job, scores in job_scores.items():
         total = 0
         for qno, response in responses.items():
             total += response * scores[int(qno) - 1]
         job_scores_total[job] = total
 
+    # determine best job based on job scores
     best_job = max(job_scores_total, key=job_scores_total.get)
 
+    # retrieve job user selected
     desired_job = data['job']
 
+    # initialise suitability score
     suitability = 6
 
+    # decrease suitability score for each job that's worse than the desired job
     for job, total in job_scores_total.items():
         if job_scores_total[job] > job_scores_total[desired_job]:
             suitability -= 1
 
+    # get movie data based on desired job
     movie_uri = apis[desired_job]
     response = requests.get(movie_uri)
     movie_data = json.loads(response.text)
 
-    if desired_job == 'ceo':
-        desired_job = 'CEO of large mega-corporation'
-    elif desired_job == 'astronaut':
-        desired_job = 'Astronaut'
-    elif desired_job == 'doctor':
-        desired_job = 'Medical doctor'
-    elif desired_job == 'model':
-        desired_job = 'Fashion model'
-    elif desired_job == 'rockstar':
-        desired_job = 'Rock star'
-    else:
-        desired_job = 'Refuse collection operative'
+    # Map desired_job and best_job to human-readable strings
+    desired_job = job_names.get(desired_job)
+    best_job = job_names.get(best_job)
 
-    if best_job == 'ceo':
-        best_job = 'CEO of large mega-corporation'
-    elif best_job == 'astronaut':
-        best_job = 'Astronaut'
-    elif best_job == 'doctor':
-        best_job = 'Medical doctor'
-    elif best_job == 'model':
-        best_job = 'Fashion model'
-    elif best_job == 'rockstar':
-        best_job = 'Rock star'
-    else:
-        best_job = 'Refuse collection operative'
-
+    # update profile with job information and movie data
     profile['desired_job'] = desired_job
     profile['best_suited_job'] = best_job
     profile['suitability_for_chosen_job'] = suitability
     profile['movie'] = movie_data
 
+    # if user selected pets, download images
     if "pets" in data:
         profile["pets"] = []
         for pet in data["pets"]:
+            uri = apis[pet]
+            response = requests.get(uri)
+            data = json.loads(response.text)
             if pet == 'dog':
-                uri = 'https://dog.ceo/api/breeds/image/random'
-                response = requests.get(uri)
-                data = json.loads(response.text)
                 image_uri = data['message']
-                response = requests.get(image_uri)
-                filename = os.path.basename(image_uri)
-                if os.path.exists(filename):
-                    os.remove(filename)
-                with open(filename, "wb") as f:
-                    f.write(response.content)
-                profile["pets"].append({"name": pet, "image": filename})
-
-            if pet == 'cat':
-                uri = 'https://api.thecatapi.com/v1/images/search'
-                response = requests.get(uri)
-                data = json.loads(response.text)
+            elif pet == 'cat':
                 image_uri = data[0]['url']
-                response = requests.get(image_uri)
-                filename = os.path.basename(image_uri)
-                with open(filename, "wb") as f:
-                    f.write(response.content)
-                profile["pets"].append({"name": pet, "image": filename})
-
-            if pet == 'duck':
-                uri = 'https://random-d.uk/api/v2/random'
-                response = requests.get(uri)
-                data = json.loads(response.text)
+            else:
                 image_uri = data['url']
-                response = requests.get(image_uri)
-                filename = os.path.basename(image_uri)
-                with open(filename, "wb") as f:
-                    f.write(response.content)
-                profile["pets"].append({"name": pet, "image": filename})
+            response = requests.get(image_uri)
+            filename = os.path.basename(image_uri)
+            if os.path.exists(filename):
+                os.remove(filename)
+            with open(filename, "wb") as f:
+                f.write(response.content)
+            profile["pets"].append({"name": pet, "image": filename})
 
-    with open("pets.json", "w") as file:
-        json.dump(profile["pets"], file)
-
+    # save updated profile in json string
     with open("profile.json", "w") as file:
         json.dump(profile, file)
 
 
-# def authenticate(connection, request):
-#     key = parse_authentication(request)
-#     correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
-#     if key == correct_key:
-#         return True
-#     else:
-#         connection.send(b'HTTP/1.1 401 Unauthorized\r\n')
-#         # Request to authenticate
-#         connection.send(b'WWW-Authenticate: Basic realm="Web 159352"')
-#         connection.send(b'\r\n')
-#         return False
+def authenticate(connection, request):
+    key = parse_authentication(request)
+    correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
+    if key == correct_key:
+        return True
+    else:
+        connection.send(b'HTTP/1.1 401 Unauthorized\r\n')
+        # Request to authenticate
+        connection.send(b'WWW-Authenticate: Basic realm="Web 159352"')
+        connection.send(b'\r\n')
+        return False
 
 
 # request handler
@@ -275,11 +230,11 @@ def do_request(connectionSocket):
     # Extract just the HTTP command (method) and path from the request
     request = connectionSocket.recv(20240)
     cmd, path = parse_http(request)
-    print(cmd)
-    print(path)
 
     if cmd == 'GET' and path == '/':
-        deliver_html(connectionSocket, 'index.html')
+        sign_in_status = authenticate(connectionSocket, request)
+        if sign_in_status:
+            deliver_html(connectionSocket, 'index.html')
     elif cmd == 'GET' and path == '/form':
         deliver_html(connectionSocket, 'psycho.html')
     elif cmd == 'GET' and path == '/view/input':
@@ -299,32 +254,6 @@ def do_request(connectionSocket):
     else:
         deliver_404(connectionSocket)
 
-    # Implement our URI path mapping scheme - here remove leading and
-    # trailing '/' and use what's left as a local file name
-    filename = path.strip('/')
-    ftype = filename.split('.').pop()  # the file extension
-
-    # sign_in_status = authenticate(connectionSocket, request)
-
-    # If file exists, try and deliver
-    # if os.path.exists(filename) and sign_in_status:
-    # if os.path.exists(filename):
-    #
-    #
-    #     deliver_200(connectionSocket)
-    #     # Deliver according to filename extension type. So far only HTML and
-    #     # JPEG are supported
-    #     if ftype == 'html':
-    #         deliver_html(connectionSocket, filename)
-    #     elif ftype == 'jpeg':
-    #         deliver_jpeg(connectionSocket, filename)
-    #     else:
-    #         deliver_404(connectionSocket)
-    #
-    # # ... otherwise deliver "Not found" response
-    # else:
-    #     deliver_404(connectionSocket)
-
     # Close the connection
     connectionSocket.close()
 
@@ -339,7 +268,6 @@ def main(serverPort):
 
     # Start listening for new connections
     mySocket.listen()
-    # print('The server is ready to receive messages on port:', serverPort)
 
     while True:
         # Accept a connection from a client
