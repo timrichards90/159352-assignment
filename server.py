@@ -16,12 +16,8 @@ def parse_http(request):
     except ValueError:
         cmd = ''
         path = ''
+        print(cmd, path)
     return cmd, path
-
-
-def parse_authentication(request):
-    key = request.decode().split().pop()
-    return key
 
 
 def http_status(connection, status):
@@ -212,8 +208,16 @@ def analyze():
         json.dump(profile, file)
 
 
+def parse_authentication(request):
+    headers = request.decode().split('\r\n')
+    for header in headers:
+        if header.startswith('Authorization:'):
+            return header.split(' ')[-1]
+
+
 def authenticate(connection, request):
     key = parse_authentication(request)
+    print('key', key)
     correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
     if key == correct_key:
         return True
@@ -230,29 +234,31 @@ def do_request(connectionSocket):
     # Extract just the HTTP command (method) and path from the request
     request = connectionSocket.recv(20240)
     cmd, path = parse_http(request)
+    print(request)
 
-    if cmd == 'GET' and path == '/':
+    if cmd == 'GET':
         sign_in_status = authenticate(connectionSocket, request)
         if sign_in_status:
-            deliver_html(connectionSocket, 'index.html')
-    elif cmd == 'GET' and path == '/form':
-        deliver_html(connectionSocket, 'psycho.html')
-    elif cmd == 'GET' and path == '/view/input':
-        deliver_json(connectionSocket, 'input.json')
-    elif cmd == 'GET' and path == '/view/profile':
-        deliver_json(connectionSocket, 'profile.json')
-    elif cmd == 'GET' and path == '/input.json':
-        deliver_json(connectionSocket, path.strip('/'))
-    elif cmd == 'GET' and path == '/profile.json':
-        deliver_json(connectionSocket, path.strip('/'))
-    elif cmd == 'GET' and path.endswith('.jpg'):
-        deliver_jpg(connectionSocket, path.strip('/'))
-    elif cmd == 'POST' and path == '/analysis':
-        parse_form_data(request)
-        analyze()
-        deliver_200(connectionSocket)
-    else:
-        deliver_404(connectionSocket)
+            if path == '/':
+                deliver_html(connectionSocket, 'index.html')
+            elif path == '/form':
+                deliver_html(connectionSocket, 'psycho.html')
+            elif path == '/view/input':
+                deliver_json(connectionSocket, 'input.json')
+            elif path == '/view/profile':
+                deliver_json(connectionSocket, 'profile.json')
+            elif path == '/input.json':
+                deliver_json(connectionSocket, path.strip('/'))
+            elif path == '/profile.json':
+                deliver_json(connectionSocket, path.strip('/'))
+            elif path.endswith('.jpg'):
+                deliver_jpg(connectionSocket, path.strip('/'))
+            elif path == '/analysis':
+                parse_form_data(request)
+                analyze()
+                deliver_200(connectionSocket)
+            else:
+                deliver_404(connectionSocket)
 
     # Close the connection
     connectionSocket.close()
