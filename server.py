@@ -4,6 +4,8 @@ import json
 import os
 import socket
 import _thread
+import sys
+
 import requests
 
 hsep = '\r\n'
@@ -16,7 +18,6 @@ def parse_http(request):
     except ValueError:
         cmd = ''
         path = ''
-        print(cmd, path)
     return cmd, path
 
 
@@ -217,7 +218,6 @@ def parse_authentication(request):
 
 def authenticate(connection, request):
     key = parse_authentication(request)
-    print('key', key)
     correct_key = 'MTkwMzIzMTU6MTkwMzIzMTU='
     if key == correct_key:
         return True
@@ -234,7 +234,6 @@ def do_request(connectionSocket):
     # Extract just the HTTP command (method) and path from the request
     request = connectionSocket.recv(20240)
     cmd, path = parse_http(request)
-    print(request)
 
     if cmd == 'GET':
         sign_in_status = authenticate(connectionSocket, request)
@@ -253,7 +252,12 @@ def do_request(connectionSocket):
                 deliver_json(connectionSocket, path.strip('/'))
             elif path.endswith('.jpg'):
                 deliver_jpg(connectionSocket, path.strip('/'))
-            elif path == '/analysis':
+            else:
+                deliver_404(connectionSocket)
+    elif cmd == 'POST':
+        sign_in_status = authenticate(connectionSocket, request)
+        if sign_in_status:
+            if path == '/analysis':
                 parse_form_data(request)
                 analyze()
                 deliver_200(connectionSocket)
@@ -284,5 +288,9 @@ def main(serverPort):
 
 
 if __name__ == '__main__':
-    serverPort = 8080
+    if len(sys.argv) > 1:
+        serverPort = int(sys.argv[1])
+    else:
+        serverPort = 8080
+
     main(serverPort)

@@ -9,7 +9,7 @@
 <!-- Javascript here or put in a separate .js file -->
 <script>
   function new_window() {
-    const uri = "http://localhost:8080/form";
+    const uri = window.location.href + "form";
     const config = "toolbar=no";  // new separate window
     const win = window.open(uri, "", config);
   }
